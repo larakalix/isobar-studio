@@ -1,0 +1,37 @@
+---
+import { ARTWORK_PALETTES } from '../lib/artwork-palettes';
+---
+
+<details class="palette-picker" id="palette-picker">
+  <summary class="flex items-center justify-between gap-2.5">
+    <span>Palettes</span>
+    <span class="palette-selection" id="palette-selection"></span>
+    <svg
+      class="palette-arrow"
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      aria-hidden="true"
+    >
+      <path d="m4 6 4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </summary>
+  <div class="palette-options" role="group" aria-label="Color palettes">
+    {Object.entries(ARTWORK_PALETTES).map(([id, { name, background, line }]) => (
+      <button type="button" class="palette-option" id={'palette-' + id} aria-pressed="false">
+        <svg class="palette-swatch" viewBox="0 0 28 22" width="28" height="22" aria-hidden="true">
+          <rect width="28" height="22" rx="3" fill={background} />
+          <path
+            d="M-2 4C5 9 9 1 16 5S23 12 30 9M-2 9C5 14 9 6 16 10S23 17 30 14M-2 14C5 19 9 11 16 15S23 22 30 19"
+            fill="none"
+            stroke={line}
+          />
+        </svg>
+        <span>{name}</span>
+      </button>
+    ))}
+  </div>
+</details>

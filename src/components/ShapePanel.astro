@@ -1,0 +1,128 @@
+---
+import Icon from './Icon.astro';
+import ImageControls from './ImageControls.astro';
+import { contourStyles } from '../lib/artwork-style';
+import { SCALE, WARP } from '../lib/pattern';
+import { PATTERN_VIEWS } from '../lib/pattern-view';
+import { DEFAULT_VARIANT, PATTERN_VARIANTS } from '../lib/variants';
+import type { PatternVariant } from '../lib/variants';
+
+const controls = [
+  {
+    id: 'pattern-scale',
+    label: 'Scale',
+    range: SCALE,
+    low: 'Smaller formations',
+    high: 'Larger formations',
+  },
+  { id: 'pattern-warp', label: 'Warp', range: WARP, low: 'Gentler bends', high: 'Stronger bends' },
+];
+const samples: Record<PatternVariant, string> = {
+  flow: 'M-5 6C28 28 34-9 65 3S89 31 105 17M-7 14C26 35 34 0 63 11S87 37 103 23M-7 23C27 43 40 10 62 20S83 45 104 32M-7 33C29 49 40 21 60 28S78 50 104 42M-3 42C31 53 44 31 59 36S71 57 102 49',
+  topographic:
+    'M-6 5C5 15 6-5 21 1S39 14 27 22S4 31-3 21M11 12C13 5 26 4 27 11S16 21 11 12ZM31-4C35 7 49 5 45 18S26 28 28 41S49 50 52 38S47 28 58 24S76 39 88 27S105 20 103 6M58 10C55 1 69-4 74 3S62 17 58 10ZM72 32C61 30 60 41 65 46S78 54 87 46S94 33 103 38',
+  valleys:
+    'M-4 10C15 1 20 17 35 12S53 5 61 0M-4 17C12 9 21 25 36 19S53 12 65 6S83 8 100-2M-4 25C12 16 22 31 38 27S52 20 65 15S83 13 100 6M-4 33C12 25 23 38 39 34C52 31 56 24 66 25S83 35 100 21M-4 41C11 33 24 46 41 42C54 39 59 31 68 33S85 42 100 29M53 48C60 40 67 41 76 45M69 20C74 16 84 17 87 20S77 25 69 20Z',
+};
+const variants = (Object.keys(PATTERN_VARIANTS) as PatternVariant[]).map((id) => ({
+  id,
+  ...PATTERN_VARIANTS[id],
+  stroke: contourStyles(
+    PATTERN_VARIANTS[id].weight,
+    PATTERN_VARIANTS[id].contrast,
+    PATTERN_VARIANTS[id].background,
+  )[0].color,
+}));
+---
+
+<details class="editor-picker" id="shape-picker" name="pattern-editor">
+  <summary class="editor-trigger inline-flex items-center justify-center gap-2">
+    <Icon name="shape" size={16} /> Shape
+  </summary>
+  <div class="editor-panel" role="group" aria-labelledby="shape-title">
+    <div class="editor-heading flex items-center justify-between gap-3">
+      <h2 id="shape-title">Shape</h2>
+      <button type="button" class="editor-reset" id="reset-shape">
+        Reset shape
+      </button>
+    </div>
+
+    <div class="view-control">
+      <p id="view-label">View</p>
+      <div class="view-options" role="radiogroup" aria-labelledby="view-label">
+        {Object.entries(PATTERN_VIEWS).map(([value, label]) => (
+          <label class="view-option">
+            <input
+              class="sr-only"
+              type="radio"
+              name="pattern-view"
+              value={value}
+              checked={value === 'flat'}
+              id={value === 'kaleidoscope' ? 'kaleidoscope-option' : undefined}
+            />
+            <span>{label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+    <ImageControls />
+    <p class="shape-source-note" id="shape-source-note" hidden>
+      Shape controls apply to generated patterns.
+    </p>
+    <fieldset class="editor-fields" id="shape-fields">
+      <div class="variant-group" role="radiogroup" aria-label="Pattern variant">
+        {variants.map(({ id, name, background, stroke }) => (
+          <label class="variant-option">
+            <input
+              class="sr-only"
+              type="radio"
+              name="pattern-variant"
+              value={id}
+              checked={id === DEFAULT_VARIANT}
+            />
+            <span class="variant-tile">
+              <svg
+                class="variant-sample"
+                viewBox="0 0 96 45"
+                aria-hidden="true"
+                preserveAspectRatio="xMidYMid slice"
+              >
+                <rect width="96" height="45" fill={background} />
+                <path d={samples[id]} fill="none" stroke={stroke} stroke-width="1.1" />
+              </svg>
+              <span class="variant-name">{name}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      {controls.map(({ id, label, range, low, high }) => (
+        <div class="editor-field">
+          <div class="flex items-center justify-between gap-3">
+            <label for={id}>{label}</label>
+            <output id={id + '-value'} for={id} aria-live="off">
+              {range.initial}%
+            </output>
+          </div>
+          <input
+            class="range-control"
+            id={id}
+            type="range"
+            min={range.min}
+            max={range.max}
+            step={range.step}
+            value={range.initial}
+            aria-valuetext={range.initial + '%'}
+            aria-describedby={id + '-description'}
+            style={
+              '--progress:' + ((range.initial - range.min) / (range.max - range.min)) * 100 + '%'
+            }
+          />
+          <div class="range-endpoints flex justify-between gap-2" id={id + '-description'}>
+            <span>{low}</span>
+            <span>{high}</span>
+          </div>
+        </div>
+      ))}
+    </fieldset>
+  </div>
+</details>

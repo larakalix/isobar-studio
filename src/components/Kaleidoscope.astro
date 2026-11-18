@@ -1,0 +1,32 @@
+---
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lib/pattern';
+
+const sectors = 12;
+const turn = 360 / sectors;
+const radius = 820;
+const farX = Math.cos((turn * Math.PI) / 180) * radius;
+const farY = Math.sin((turn * Math.PI) / 180) * radius;
+const window = `0,0 ${radius},0 ${farX},${farY}`;
+// Alternate reflected wedges so neighboring sectors share the same edge.
+const transforms = Array.from({ length: sectors }, (_, index) => {
+  const reflected = index % 2 === 1;
+  return (
+    `translate(${CANVAS_WIDTH / 2} ${CANVAS_HEIGHT / 2}) rotate(${turn * (index + Number(reflected))})` +
+    (reflected ? ' scale(1 -1)' : '')
+  );
+});
+---
+
+<defs id="kaleidoscope-defs">
+  <clipPath id="kaleidoscope-window">
+    <polygon points={window} />
+  </clipPath>
+  <g id="kaleidoscope-sector" clip-path="url(#kaleidoscope-window)">
+    <use href="#pattern-contours" transform="translate(-424 -276)" />
+  </g>
+</defs>
+<g id="kaleidoscope-view" display="none">
+  {transforms.map((transform) => (
+    <use href="#kaleidoscope-sector" transform={transform} />
+  ))}
+</g>

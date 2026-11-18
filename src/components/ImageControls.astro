@@ -1,0 +1,70 @@
+---
+import Icon from './Icon.astro';
+import { IMAGE_SMOOTHING, MAX_CROP_TRIM } from '../lib/image-pattern';
+
+const edges = ['Left', 'Top', 'Right', 'Bottom'];
+---
+
+<div id="image-controls" class="editor-fields" hidden>
+  <div class="editor-field">
+    <div class="flex items-center justify-between gap-3">
+      <label for="image-smoothing">Smoothing</label>
+      <output id="image-smoothing-value" for="image-smoothing" aria-live="off">
+        {IMAGE_SMOOTHING.initial}%
+      </output>
+    </div>
+    <input
+      class="range-control"
+      id="image-smoothing"
+      type="range"
+      min={IMAGE_SMOOTHING.min}
+      max={IMAGE_SMOOTHING.max}
+      value={IMAGE_SMOOTHING.initial}
+      aria-valuetext={IMAGE_SMOOTHING.initial + '%'}
+      style={'--progress:' + IMAGE_SMOOTHING.initial + '%'}
+    />
+  </div>
+  <label class="major-toggle flex items-center gap-2">
+    <input type="checkbox" id="image-invert" aria-describedby="image-invert-note" />
+    Invert elevation
+  </label>
+  <p class="shape-source-note image-invert-note" id="image-invert-note">
+    Swap peaks and valleys in 3D.
+  </p>
+  <details class="editor-disclosure" id="image-crop">
+    <summary class="flex items-center justify-between gap-2.5">
+      <span>Crop image</span>
+      <span class="palette-selection" id="image-crop-status">
+        Full image
+      </span>
+      <Icon name="chevron" size={13} />
+    </summary>
+    <canvas id="image-crop-preview" aria-hidden="true"></canvas>
+    <p class="image-crop-help">Drag to select an area or trim the edges below.</p>
+    <div class="image-crop-fields">
+      {edges.map((edge) => (
+        <div class="editor-field">
+          <div class="flex items-center justify-between gap-1">
+            <label for={'image-crop-' + edge.toLowerCase()}>{edge}</label>
+            <output for={'image-crop-' + edge.toLowerCase()} aria-live="off">
+              0%
+            </output>
+          </div>
+          <input
+            class="range-control"
+            id={'image-crop-' + edge.toLowerCase()}
+            data-crop-edge
+            type="range"
+            min="0"
+            max={MAX_CROP_TRIM}
+            value="0"
+            style="--progress:0%"
+          />
+        </div>
+      ))}
+    </div>
+    <button type="button" class="editor-reset image-crop-reset" id="reset-image-crop">
+      Reset crop
+    </button>
+  </details>
+</div>

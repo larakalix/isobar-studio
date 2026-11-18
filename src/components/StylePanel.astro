@@ -1,0 +1,175 @@
+---
+import ArtworkPalettes from './ArtworkPalettes.astro';
+import Icon from './Icon.astro';
+import {
+  CONTRAST,
+  MAJOR_INTERVAL,
+  MAJOR_WEIGHT,
+  WEIGHT,
+  contourStyles,
+} from '../lib/artwork-style';
+import { DEFAULT_VARIANT, PATTERN_VARIANTS } from '../lib/variants';
+
+const preset = PATTERN_VARIANTS[DEFAULT_VARIANT];
+const progress = ({ min, max }: typeof WEIGHT, value: number) =>
+  ((value - min) / (max - min)) * 100;
+const defaultLineColor = contourStyles(preset.weight, preset.contrast, preset.background)[0].color;
+---
+
+<details class="editor-picker" id="style-picker" name="pattern-editor">
+  <summary class="editor-trigger inline-flex items-center justify-center gap-2">
+    <Icon name="style" size={16} /> Style
+  </summary>
+  <div class="editor-panel" role="group" aria-labelledby="style-title">
+    <div class="editor-heading flex items-center justify-between gap-3">
+      <h2 id="style-title">Style</h2>
+      <button type="button" class="editor-reset" id="reset-style">
+        Reset style
+      </button>
+    </div>
+
+    <ArtworkPalettes />
+
+    <div class="editor-fields">
+      <div class="editor-field">
+        <div class="flex items-center justify-between gap-3">
+          <label for="line-weight">Line weight</label>
+          <output id="line-weight-value" for="line-weight" aria-live="off">
+            {preset.weight.toFixed(1)} px
+          </output>
+        </div>
+        <input
+          class="range-control"
+          id="line-weight"
+          type="range"
+          min={WEIGHT.min}
+          max={WEIGHT.max}
+          step={WEIGHT.step}
+          value={preset.weight}
+          aria-valuetext={preset.weight.toFixed(1) + ' px'}
+          style={'--progress:' + progress(WEIGHT, preset.weight) + '%'}
+        />
+      </div>
+
+      <details class="major-contours editor-disclosure">
+        <summary class="flex items-center justify-between gap-2.5">
+          <span>Major contours</span>
+          <span class="palette-selection" id="major-summary">
+            Every {MAJOR_INTERVAL.initial}
+          </span>
+          <Icon name="chevron" size={13} />
+        </summary>
+        <label class="major-toggle flex items-center gap-2">
+          <input type="checkbox" id="major-contours" checked />
+          Emphasize major contours
+        </label>
+        <fieldset class="major-fields" id="major-fields">
+          <legend class="sr-only">Major contour settings</legend>
+          <div class="editor-field">
+            <div class="flex items-center justify-between gap-3">
+              <label for="major-interval">Interval</label>
+              <output id="major-interval-value" for="major-interval" aria-live="off">
+                Every {MAJOR_INTERVAL.initial}
+              </output>
+            </div>
+            <input
+              class="range-control"
+              id="major-interval"
+              type="range"
+              min={MAJOR_INTERVAL.min}
+              max={MAJOR_INTERVAL.max}
+              step={MAJOR_INTERVAL.step}
+              value={MAJOR_INTERVAL.initial}
+              aria-valuetext={'Every ' + MAJOR_INTERVAL.initial + ' contour levels'}
+              style={'--progress:' + progress(MAJOR_INTERVAL, MAJOR_INTERVAL.initial) + '%'}
+            />
+          </div>
+          <div class="editor-field">
+            <div class="flex items-center justify-between gap-3">
+              <label for="major-weight">Extra weight</label>
+              <output id="major-weight-value" for="major-weight" aria-live="off">
+                +{MAJOR_WEIGHT.initial.toFixed(1)} px
+              </output>
+            </div>
+            <input
+              class="range-control"
+              id="major-weight"
+              type="range"
+              min={MAJOR_WEIGHT.min}
+              max={MAJOR_WEIGHT.max}
+              step={MAJOR_WEIGHT.step}
+              value={MAJOR_WEIGHT.initial}
+              aria-valuetext={MAJOR_WEIGHT.initial.toFixed(1) + ' extra pixels'}
+              style={'--progress:' + progress(MAJOR_WEIGHT, MAJOR_WEIGHT.initial) + '%'}
+            />
+          </div>
+        </fieldset>
+      </details>
+
+      <div class="editor-field flex items-center justify-between gap-2">
+        <label for="line-color">Line color</label>
+        <div class="line-color-actions inline-flex shrink-0 items-center gap-1.5">
+          <div class="color-control inline-flex items-center gap-2">
+            <input type="color" id="line-color" value={defaultLineColor} />
+            <output id="line-color-value" for="line-color" aria-live="off">
+              {defaultLineColor.toUpperCase()}
+            </output>
+          </div>
+          <button
+            type="button"
+            class="color-mode"
+            id="auto-line-color"
+            aria-label="Auto line color"
+            aria-pressed="true"
+          >
+            Auto
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-field">
+        <div class="flex items-center justify-between gap-3">
+          <label for="line-contrast">Contrast</label>
+          <output id="line-contrast-value" for="line-contrast" aria-live="off">
+            {preset.contrast}%
+          </output>
+        </div>
+        <input
+          class="range-control"
+          id="line-contrast"
+          type="range"
+          min={CONTRAST.min}
+          max={CONTRAST.max}
+          step={CONTRAST.step}
+          value={preset.contrast}
+          aria-valuetext={preset.contrast + '%'}
+          aria-describedby="auto-contrast-note"
+          style={'--progress:' + progress(CONTRAST, preset.contrast) + '%'}
+        />
+        <p class="color-mode-note" id="auto-contrast-note" hidden>
+          Contrast applies to Auto line color.
+        </p>
+      </div>
+
+      <div class="editor-field flex items-center justify-between gap-3">
+        <label for="background-color">Background color</label>
+        <div class="color-control inline-flex items-center gap-2">
+          <input type="color" id="background-color" value={preset.background} />
+          <output id="background-color-value" for="background-color" aria-live="off">
+            {preset.background.toUpperCase()}
+          </output>
+        </div>
+      </div>
+    </div>
+
+    <label class="transparent-option flex items-start gap-2.5">
+      <input type="checkbox" id="transparent-svg" aria-describedby="transparent-description" />
+      <span>
+        <span class="block">Transparent SVG</span>
+        <span class="block" id="transparent-description">
+          Omit the background on export.
+        </span>
+      </span>
+    </label>
+  </div>
+</details>

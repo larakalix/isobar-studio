@@ -1,0 +1,353 @@
+---
+import Icon from '../components/Icon.astro';
+import Kaleidoscope from '../components/Kaleidoscope.astro';
+import SculptPanel from '../components/SculptPanel.astro';
+import ShapePanel from '../components/ShapePanel.astro';
+import StylePanel from '../components/StylePanel.astro';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  createPattern,
+  DEFAULT_DENSITY,
+  DEFAULT_SEED,
+  MAX_DENSITY,
+  MIN_DENSITY,
+  renderPattern,
+} from '../lib/pattern';
+import { contourStyles, terrainColor } from '../lib/artwork-style';
+import { IMAGE_ACCEPT } from '../lib/image-pattern';
+import { LOOP_DEFAULT_DURATION, LOOP_DURATIONS, LOOP_FRAME_RATE } from '../lib/loop-export';
+import { TERRAIN_SHADE_LEVELS } from '../lib/pattern-view';
+import { DEFAULT_VARIANT, PATTERN_VARIANTS } from '../lib/variants';
+import '../styles/global.css';
+
+const { paths } = renderPattern(createPattern(DEFAULT_SEED)(0), DEFAULT_DENSITY);
+const preset = PATTERN_VARIANTS[DEFAULT_VARIANT];
+const lineStyles = contourStyles(preset.weight, preset.contrast, preset.background);
+const progress = ((DEFAULT_DENSITY - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY)) * 100;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#141414" />
+    <meta
+      name="description"
+      content="Generate flowing, topographic-style contour patterns and export them as SVG or looping video."
+    />
+    <link rel="icon" type="image/svg+xml" href={import.meta.env.BASE_URL + 'icon.svg'} />
+    <title>Isobar Studio</title>
+  </head>
+  <body>
+    <main class="studio">
+      <header class="studio-header flex items-center justify-between gap-3">
+        <h1 class="brand flex items-center gap-3">
+          <span class="brand-mark grid shrink-0 place-items-center">
+            <Icon name="logo" size={22} />
+          </span>
+          Isobar Studio
+        </h1>
+        <div class="header-actions flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            id="open-sculpt"
+            class="header-button sculpt-trigger inline-flex items-center justify-center gap-2"
+            aria-label="Sculpt"
+            aria-pressed="false"
+            aria-controls="sculpt-panel"
+            title="Sculpt contour terrain"
+          >
+            <Icon name="sculpt" size={17} />
+            <span class="header-label">Sculpt</span>
+          </button>
+          <button
+            type="button"
+            id="open-import"
+            class="header-button import-trigger inline-flex items-center justify-center gap-2"
+            aria-label="Import"
+            title="Import image or CSV"
+            aria-haspopup="dialog"
+            hidden
+          >
+            <Icon name="upload" size={16} />
+            <span class="header-label">Import</span>
+          </button>
+          <button
+            type="button"
+            id="copy-pattern-link"
+            class="header-button share-trigger inline-flex items-center justify-center gap-2"
+            aria-label="Copy pattern link"
+            title="Copy pattern link"
+          >
+            <span class="share-link-icon">
+              <Icon name="link" size={17} />
+            </span>
+            <span class="share-copied-icon">
+              <Icon name="check" size={17} />
+            </span>
+            <span class="header-label share-label" id="share-label">
+              Copy link
+            </span>
+          </button>
+          <button
+            type="button"
+            id="export-svg"
+            class="header-button export-trigger inline-flex items-center justify-center gap-2"
+            aria-label="Export SVG"
+            title="Export SVG"
+          >
+            <Icon name="download" size={17} />
+            <span class="header-label">
+              <span class="button-verb">Export </span>SVG
+            </span>
+          </button>
+          <button
+            type="button"
+            id="open-loop"
+            class="header-button export-trigger inline-flex items-center justify-center gap-2"
+            aria-label="Export loop"
+            title="Export loop"
+            aria-haspopup="dialog"
+          >
+            <Icon name="loop" size={17} />
+            <span class="header-label">
+              <span class="button-verb">Export </span>loop
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <figure class="stage" id="stage" aria-label="Isobar preview">
+        <SculptPanel />
+        <div class="artwork" id="artwork" style={'--artwork:' + preset.background}>
+          <svg
+            id="pattern-svg"
+            class="block h-full w-full"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox={'0 0 ' + CANVAS_WIDTH + ' ' + CANVAS_HEIGHT}
+            preserveAspectRatio="xMidYMid slice"
+            shape-rendering="geometricPrecision"
+            role="img"
+            aria-labelledby="pattern-title pattern-description"
+          >
+            <title id="pattern-title">Isobar contour pattern</title>
+            <desc id="pattern-description">Flowing contour lines.</desc>
+            <rect
+              data-background
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              fill={preset.background}
+            />
+            <g id="direct-view">
+              <g id="terrain-surface" display="none" fill={lineStyles[0].color} fill-rule="evenodd">
+                <rect
+                  id="terrain-base"
+                  width={CANVAS_WIDTH}
+                  height={CANVAS_HEIGHT}
+                  fill={terrainColor(preset.background, lineStyles[0].color)}
+                />
+                {TERRAIN_SHADE_LEVELS.map(() => (
+                  <path opacity="0.045" />
+                ))}
+              </g>
+              <g id="pattern-contours" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                {lineStyles.map(({ color, width }, i) => (
+                  <path
+                    data-trace={i}
+                    d={paths[i]}
+                    stroke={color}
+                    stroke-width={width}
+                    vector-effect="non-scaling-stroke"
+                  />
+                ))}
+              </g>
+            </g>
+            <Kaleidoscope />
+          </svg>
+          <div
+            id="sculpt-canvas"
+            class="sculpt-canvas"
+            role="group"
+            aria-label="Sculpt canvas"
+            aria-describedby="sculpt-hint sculpt-keyboard"
+            tabindex="0"
+            hidden
+          >
+            <div
+              id="sculpt-radius-guide"
+              class="sculpt-radius-guide"
+              aria-hidden="true"
+              hidden
+            ></div>
+          </div>
+          <p class="empty-state" id="empty-state" hidden>
+            This grid has no pressure contours.
+          </p>
+        </div>
+
+        <figcaption class="controls">
+          <button
+            type="button"
+            class="generate-button inline-flex items-center justify-center gap-2"
+            id="new-pattern"
+          >
+            <Icon name="shuffle" size={17} /> New pattern
+          </button>
+          <div class="density-control flex min-w-0 items-center">
+            <label for="density">Density</label>
+            <input
+              id="density"
+              class="range-control"
+              type="range"
+              min={MIN_DENSITY}
+              max={MAX_DENSITY}
+              value={DEFAULT_DENSITY}
+              aria-valuetext={DEFAULT_DENSITY + ' contour levels'}
+              style={'--progress:' + progress + '%'}
+            />
+            <output id="density-value" for="density" aria-live="off">
+              {DEFAULT_DENSITY}
+            </output>
+          </div>
+          <div class="modes flex items-center gap-0.5" role="group" aria-label="Preview mode">
+            <button
+              type="button"
+              id="static-mode"
+              class="mode-button inline-flex items-center justify-center gap-1.5"
+              aria-pressed="true"
+            >
+              <Icon name="still" size={15} /> Static
+            </button>
+            <button
+              type="button"
+              id="animate-mode"
+              class="mode-button inline-flex items-center justify-center gap-1.5"
+              aria-pressed="false"
+            >
+              <Icon name="play" size={15} /> Animate
+            </button>
+          </div>
+          <div class="editor-controls flex items-center">
+            <ShapePanel />
+            <StylePanel />
+          </div>
+          <button
+            type="button"
+            id="fullscreen"
+            class="square-button grid place-items-center"
+            aria-label="Enter fullscreen"
+            title="Enter fullscreen"
+          >
+            <Icon name="expand" size={18} />
+          </button>
+        </figcaption>
+      </figure>
+      <p class="source-file" id="source-file" hidden></p>
+      <p id="status" class="sr-only" role="status"></p>
+    </main>
+
+    <dialog id="import-dialog" aria-labelledby="import-title">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="import-title">Import artwork</h2>
+        <form method="dialog">
+          <button class="square-button grid place-items-center" aria-label="Close import">
+            <Icon name="close" size={20} />
+          </button>
+        </form>
+      </div>
+      <input type="file" id="image-file" accept={IMAGE_ACCEPT} hidden />
+      <input type="file" id="csv-file" accept=".csv,text/csv" hidden />
+      <div class="dialog-actions import-options">
+        <div>
+          <button
+            class="generate-button inline-flex items-center justify-center gap-2"
+            type="button"
+            id="choose-image"
+          >
+            <Icon name="upload" size={16} /> Image to Isobars
+          </button>
+          <p>Choose a logo or silhouette in PNG, SVG, JPG, or WebP format.</p>
+        </div>
+        <div>
+          <button
+            class="header-button inline-flex items-center justify-center gap-2"
+            type="button"
+            id="choose-file"
+          >
+            <Icon name="upload" size={16} /> Choose CSV
+          </button>
+          <p>
+            Use a rectangular grid of pressure readings in hPa with the header{' '}
+            <code>x,y,pressure</code>.
+          </p>
+          <a href={import.meta.env.BASE_URL + 'example-pressure.csv'} download>
+            Download example CSV
+          </a>
+        </div>
+      </div>
+      <p class="import-error" id="import-error" role="alert" hidden></p>
+    </dialog>
+
+    <dialog id="share-dialog" aria-labelledby="share-title">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="share-title">Pattern link</h2>
+        <form method="dialog">
+          <button class="square-button grid place-items-center" aria-label="Close pattern link">
+            <Icon name="close" size={20} />
+          </button>
+        </form>
+      </div>
+      <label class="share-input-label" for="pattern-link">
+        Select and copy this link.
+      </label>
+      <input type="url" id="pattern-link" readonly />
+    </dialog>
+
+    <dialog id="loop-dialog" aria-labelledby="loop-title" aria-describedby="loop-description">
+      <h2 id="loop-title">Export seamless loop</h2>
+      <p id="loop-description">
+        One full cycle from the current frame, at {LOOP_FRAME_RATE} fps. Downloads as MP4 or WebM,
+        depending on browser support.
+      </p>
+      <form id="loop-form">
+        <div class="loop-field flex items-center justify-between gap-3">
+          <label for="loop-duration">Duration</label>
+          <select id="loop-duration" autofocus>
+            {LOOP_DURATIONS.map((duration) => (
+              <option value={duration} selected={duration === LOOP_DEFAULT_DURATION}>
+                {duration} seconds
+              </option>
+            ))}
+          </select>
+        </div>
+        <progress
+          id="loop-progress"
+          aria-label="Loop export progress"
+          max="1"
+          value="0"
+          hidden
+        ></progress>
+        <p id="loop-status" role="status" hidden></p>
+        <p id="loop-error" class="import-error" role="alert" hidden></p>
+        <div class="dialog-actions flex flex-wrap items-center justify-end gap-2">
+          <button type="button" class="header-button" id="loop-cancel">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="generate-button inline-flex items-center justify-center gap-2"
+            id="loop-start"
+          >
+            <Icon name="download" size={16} /> Download loop
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      import '../lib/workspace';
+    </script>
+  </body>
+</html>

@@ -1,0 +1,81 @@
+---
+import Icon from './Icon.astro';
+import { SCULPT_RADIUS, SCULPT_STRENGTH } from '../lib/sculpt';
+
+const controls = [
+  { id: 'sculpt-radius', label: 'Radius', range: SCULPT_RADIUS },
+  { id: 'sculpt-strength', label: 'Strength', range: SCULPT_STRENGTH },
+];
+---
+
+<section id="sculpt-panel" class="sculpt-panel" aria-label="Sculpt tools" hidden>
+  <div class="sculpt-tools flex items-center gap-1" role="group" aria-label="Place a point">
+    <button type="button" class="sculpt-tool" id="sculpt-peak" aria-pressed="true">
+      <Icon name="peak" size={15} /> Peak
+    </button>
+    <button type="button" class="sculpt-tool" id="sculpt-valley" aria-pressed="false">
+      <Icon name="valley" size={15} /> Valley
+    </button>
+  </div>
+  <fieldset class="sculpt-ranges" id="sculpt-ranges">
+    <legend class="sr-only">Point settings</legend>
+    {controls.map(({ id, label, range }) => (
+      <div class="editor-field">
+        <div class="flex items-center justify-between gap-2">
+          <label for={id}>{label}</label>
+          <output id={id + '-value'} for={id} aria-live="off">
+            {range.initial}%
+          </output>
+        </div>
+        <input
+          class="range-control"
+          id={id}
+          type="range"
+          min={range.min}
+          max={range.max}
+          value={range.initial}
+          aria-valuetext={range.initial + '%'}
+          style={
+            '--progress:' + ((range.initial - range.min) / (range.max - range.min)) * 100 + '%'
+          }
+        />
+      </div>
+    ))}
+  </fieldset>
+  <div class="sculpt-actions flex items-center gap-1">
+    <button
+      type="button"
+      class="sculpt-tool"
+      id="sculpt-undo"
+      aria-label="Undo sculpt edit"
+      title="Undo sculpt edit"
+      disabled
+    >
+      <Icon name="undo" size={16} />
+      <span class="sculpt-undo-label">Undo</span>
+    </button>
+    <button
+      type="button"
+      class="sculpt-tool"
+      id="sculpt-remove"
+      aria-label="Remove selected point"
+      title="Remove selected point"
+      disabled
+    >
+      <Icon name="trash" size={15} />
+    </button>
+    <button type="button" class="sculpt-tool" id="sculpt-view">
+      Preview 3D
+    </button>
+    <button type="button" class="sculpt-tool sculpt-done" id="sculpt-done">
+      Done
+    </button>
+  </div>
+  <p class="sculpt-hint" id="sculpt-hint">
+    Click or tap the canvas to place a point. Drag a marker to move it.
+  </p>
+  <p class="sr-only" id="sculpt-keyboard">
+    Press Enter on the canvas to place a point in the center. Use the arrow keys to move a focused
+    marker.
+  </p>
+</section>
